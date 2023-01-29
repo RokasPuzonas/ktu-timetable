@@ -7,7 +7,10 @@ use lazy_regex::{regex_captures};
 #[derive(Debug, Clone, Copy)]
 pub enum EventCategory {
     Default,
-    Yellow
+    Yellow,
+    Green,
+    Red,
+    Blue
 }
 
 #[derive(Debug, Clone)]
@@ -30,7 +33,8 @@ pub struct Timetable {
 
 #[derive(Debug)]
 pub enum GetTimetableError {
-    NotFound
+    NotFound,
+    EmptyTimetable
 }
 
 impl Timetable {
@@ -51,8 +55,10 @@ impl Error for GetTimetableError {}
 
 impl fmt::Display for GetTimetableError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use GetTimetableError::*;
         match self {
-            GetTimetableError::NotFound => write!(f, "Timetable not found"),
+            NotFound => write!(f, "Timetable not found"),
+            EmptyTimetable => write!(f, "Timetable is empty")
         }
     }
 }
@@ -93,7 +99,7 @@ impl TimetableGetter for BlockingTimetableGetter {
         }
         let cal = cal.unwrap().unwrap();
         if cal.events.is_empty() {
-            return Err(GetTimetableError::NotFound);
+            return Err(GetTimetableError::EmptyTimetable);
         }
 
         let mut timetable = Timetable { events: vec![] };
@@ -106,10 +112,14 @@ impl TimetableGetter for BlockingTimetableGetter {
             let location_prop = find_property(&event.properties, "LOCATION")?;
 
             let mut category = EventCategory::Default;
-            if let Some(category_value) = &category_prop.value {
-                if category_value == "Yellow Category" {
-                    category = EventCategory::Yellow;
-                }
+            if let Some(category_str) = &category_prop.value {
+                category = match category_str.as_str() {
+                    "Yellow Category" => EventCategory::Yellow,
+                    "Green Category" => EventCategory::Green,
+                    "Red Category" => EventCategory::Red,
+                    "Blue Category" => EventCategory::Blue,
+                    _ => EventCategory::Default
+                };
             }
             let start_str = start_prop.value.clone().unwrap();
             let end_str = end_prop.value.clone().unwrap();

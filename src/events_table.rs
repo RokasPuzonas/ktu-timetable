@@ -22,6 +22,9 @@ fn get_category_bg(category: EventCategory) -> Color32 {
     match category {
         EventCategory::Default => Color32::GRAY,
         EventCategory::Yellow => Color32::from_rgb(251, 184, 41),
+        EventCategory::Green => Color32::from_rgb(152, 188, 55),
+        EventCategory::Red => Color32::from_rgb(247, 83, 65),
+        EventCategory::Blue => Color32::from_rgb(10, 174, 179),
     }
 }
 
@@ -289,9 +292,9 @@ impl<'a> EventsTable<'a> {
 
         // now line
         let painter = ui.painter();
-        let current_time = now.minute() + now.hour() * 60 - timestamps_mins[0];
-        if current_time > 0 && current_time < *timestamps_mins.last().unwrap_or(&0) && !is_weekend(now.date()) {
-            let offset = current_time as f32 * minute_to_pixel_scale;
+        let current_time = now.minute() + now.hour() * 60;
+        if current_time > timestamps_mins[0] && current_time < *timestamps_mins.last().unwrap_or(&0) && !is_weekend(now.date()) {
+            let offset = (current_time - timestamps_mins[0]) as f32 * minute_to_pixel_scale;
             let points = [
                 rect.left_top()  + vec2(0.0, offset),
                 rect.right_top() + vec2(0.0, offset)
