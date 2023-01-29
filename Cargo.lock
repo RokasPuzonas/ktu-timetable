@@ -1305,6 +1305,7 @@ dependencies = [
  "ical",
  "image",
  "lazy-regex",
+ "lazy_static",
  "native-tls",
  "serde",
  "toml",

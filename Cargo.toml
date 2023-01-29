@@ -17,3 +17,4 @@ lazy-regex = "2.4.1"
 directories-next = "2.0.0"
 toml = "0.5.11"
 serde = { version = "1.0.152", features = ["derive"]}
+lazy_static = "1.4.0"

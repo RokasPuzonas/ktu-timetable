@@ -1,64 +1,115 @@
-use std::{path::{Path, PathBuf}, fs};
+use std::{path::{Path, PathBuf}, fs, io, error::Error, fmt};
 
 use directories_next::ProjectDirs;
-use eframe::Storage;
-use egui::util::cache::CacheStorage;
 use serde::{Deserialize, Serialize};
 
-
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Config {
-    pub vidko_code: Option<String>
+    pub vidko: Option<String>
 }
-
 impl Default for Config {
     fn default() -> Self {
-        Self {
-            vidko_code: Some("E0000".into())
+        Self { vidko: None }
+    }
+}
+
+#[derive(Debug)]
+pub enum LoadConfigError {
+    NotFound,
+    FileError(io::Error),
+    TomlError(toml::de::Error)
+}
+impl Error for LoadConfigError {}
+impl fmt::Display for LoadConfigError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            LoadConfigError::FileError(e) => write!(f, "File error: {}", e),
+            LoadConfigError::TomlError(e) => write!(f, "Toml error: {}", e),
+            LoadConfigError::NotFound     => write!(f, "Not found"),
         }
     }
 }
 
-pub struct ConfigStorage {
-    pub config: Config,
-
-    config_file: Option<PathBuf>
+#[derive(Debug)]
+pub enum SaveConfigError {
+    FileError(io::Error),
+    TomlError(toml::ser::Error)
+}
+impl Error for SaveConfigError {}
+impl fmt::Display for SaveConfigError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            SaveConfigError::FileError(e) => write!(f, "File error: {}", e),
+            SaveConfigError::TomlError(e) => write!(f, "Toml error: {}", e),
+        }
+    }
 }
 
-impl Default for ConfigStorage {
+pub trait ConfigStore {
+    fn load(&self) -> Result<Config, LoadConfigError>;
+    fn save(&self, config: &Config) -> Result<(), SaveConfigError>;
+}
+
+
+
+pub struct TomlConfigStore {
+    filename: PathBuf
+}
+impl TomlConfigStore {
+    fn new(filename: &Path) -> Self {
+        Self {
+            filename: filename.into()
+        }
+    }
+}
+impl Default for TomlConfigStore {
     fn default() -> Self {
-        let project_dirs = ProjectDirs::from("", "",  "KTU Timetable").expect("Failed to determine project directories");
+        let project_dirs = ProjectDirs::from("", "",  "KTU Timetable").expect("Failed to determine home directory");
         let config_dir = project_dirs.config_dir();
-        Self {
-            config: Config::default(),
-            config_file: Some(config_dir.join("config.toml"))
+        Self::new(&config_dir.join("config.toml"))
+    }
+}
+impl ConfigStore for TomlConfigStore {
+    fn load(&self) -> Result<Config, LoadConfigError> {
+        let config_str = fs::read_to_string(&self.filename)
+            .map_err(|e| LoadConfigError::FileError(e))?;
+
+        toml::from_str(&config_str)
+            .map_err(|e| LoadConfigError::TomlError(e))
+    }
+
+    fn save(&self, config: &Config) -> Result<(), SaveConfigError> {
+        let directory = Path::parent(&self.filename).unwrap();
+        if !Path::is_dir(directory) {
+            fs::create_dir_all(directory)
+                .map_err(|e| SaveConfigError::FileError(e))?;
         }
+
+        let config_str = toml::to_string_pretty(config)
+            .map_err(|e| SaveConfigError::TomlError(e))?;
+
+        fs::write(&self.filename, config_str)
+            .map_err(|e| SaveConfigError::FileError(e))?;
+
+        Ok(())
     }
 }
 
-impl ConfigStorage {
-    pub fn memory() -> Self {
-        let mut config = Self::default();
-        config.config_file = None;
-        config
-    }
 
-    pub fn attempt_load(&mut self) {
-        if self.config_file.is_none() { return; }
-        let config_file = self.config_file.as_ref().unwrap();
-        let config_str = fs::read_to_string(config_file);
-        if let Err(_) = config_str {
-            fs::write(config_file, toml::to_string_pretty(&Config::default()).unwrap()).unwrap();
-        }
-        let config_str = config_str.unwrap();
-        self.config = toml::from_str(&config_str).unwrap_or_default();
-    }
-
-    pub fn attempt_save(&self) {
-        if self.config_file.is_none() { return; }
-        let config_file = self.config_file.as_ref().unwrap();
-        let config_str = toml::to_string_pretty(&self.config).unwrap();
-        fs::write(config_file, config_str).unwrap();
+pub struct MemoryConfigStore {
+    config: Option<Config>
+}
+impl MemoryConfigStore {
+    pub fn new(config: Config) -> Self {
+        Self { config: Some(config) }
     }
 }
+impl ConfigStore for MemoryConfigStore {
+    fn load(&self) -> Result<Config, LoadConfigError> {
+        self.config.clone().ok_or(LoadConfigError::NotFound)
+    }
 
+    fn save(&self, _config: &Config) -> Result<(), SaveConfigError> {
+        Ok(())
+    }
+}
