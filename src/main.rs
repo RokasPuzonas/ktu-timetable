@@ -10,10 +10,9 @@ mod utils;
 extern crate lazy_static;
 
 use app::MainApp;
-use chrono::{Local, NaiveDate, NaiveTime};
-use config::{MemoryConfigStore, Config, TomlConfigStore};
+use config::TomlConfigStore;
 use eframe::egui;
-use timetable::{DummyTimetableGetter, Timetable, Event, BlockingTimetableGetter};
+use timetable::BlockingTimetableGetter;
 
 // TODO: show errors when loading config
 // TODO: Settings menu

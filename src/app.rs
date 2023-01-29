@@ -1,4 +1,4 @@
-use std::{ops::Add, rc::Rc, cell::{Cell, RefCell}, f64::consts::E};
+use std::{ops::Add, rc::Rc, cell::RefCell};
 
 use eframe::{egui, CreationContext};
 use chrono::{Datelike, NaiveDate, Weekday, IsoWeek, Duration, Days, Local};
@@ -29,7 +29,6 @@ pub struct MainApp {
     config: Option<Config>,
 
     assets: Option<AppAssets>,
-    vidko_textfield: String,
 
     screen: Option<Rc<RefCell<dyn Screen>>>
 }
@@ -51,8 +50,6 @@ fn get_current_week() -> IsoWeek {
 
 fn get_future_week(week_offset: u64) -> IsoWeek {
     let now_week = get_current_week();
-    let year = now_week.year();
-    let week = now_week.week();
     let week_date = NaiveDate::from_isoywd_opt(now_week.year(), now_week.week(), Weekday::Mon).expect("Invalid week or year given");
     week_date.checked_add_days(Days::new(7 * week_offset)).unwrap().iso_week()
 }
@@ -144,7 +141,6 @@ impl MainApp {
             assets: None,
             config_store,
             config: None,
-            vidko_textfield: String::new(),
             timetable_getter,
             screen: None
         }

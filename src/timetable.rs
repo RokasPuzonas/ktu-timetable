@@ -139,12 +139,13 @@ pub struct DummyTimetableGetter {
     timetable: Timetable
 }
 impl DummyTimetableGetter {
+    #[allow(unused)]
     pub fn new(timetable: Timetable) -> Self {
         Self { timetable }
     }
 }
 impl TimetableGetter for DummyTimetableGetter {
-    fn get(&self, vidko: &str) -> Result<Timetable, GetTimetableError> {
+    fn get(&self, _vidko: &str) -> Result<Timetable, GetTimetableError> {
         Ok(self.timetable.clone())
     }
 }

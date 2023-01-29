@@ -100,6 +100,7 @@ pub struct MemoryConfigStore {
     config: Option<Config>
 }
 impl MemoryConfigStore {
+    #[allow(unused)]
     pub fn new(config: Config) -> Self {
         Self { config: Some(config) }
     }
