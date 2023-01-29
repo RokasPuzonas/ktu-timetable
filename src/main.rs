@@ -15,12 +15,9 @@ use config::{MemoryConfigStore, Config, TomlConfigStore};
 use eframe::egui;
 use timetable::{DummyTimetableGetter, Timetable, Event, BlockingTimetableGetter};
 
-// TODO: use lazy_static!() to load assets
-// TODO: convert events_table to egui widget
 // TODO: show errors when loading config
 // TODO: Settings menu
 // TODO: use "confy" for config loading?
-// TODO: refactor persistence
 // TODO: Setup pipeline
 
 fn main() -> Result<(), ureq::Error> {
