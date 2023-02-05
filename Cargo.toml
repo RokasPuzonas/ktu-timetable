@@ -2,6 +2,10 @@
 name = "ktu-timetable"
 version = "0.1.0"
 edition = "2021"
+build = "build.rs"
+
+[build-dependencies]
+winres = "0.1"
 
 [profile.release]
 opt-level = 'z'     # Optimize for size
@@ -23,3 +27,13 @@ directories-next = "2.0.0"
 toml = "0.5.11"
 serde = { version = "1.0.152", features = ["derive"]}
 lazy_static = "1.4.0"
+winres = "0.1.12"
+
+[dependencies.windows]
+version = "0.43.0"
+features = [
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Foundation",
+    "Win32_System_LibraryLoader",
+    "Win32_Graphics_Gdi"
+]

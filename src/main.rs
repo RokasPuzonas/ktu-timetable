@@ -5,13 +5,14 @@ mod app;
 mod config;
 mod events_table;
 mod utils;
+mod platforms;
+mod environment;
 
 #[macro_use]
 extern crate lazy_static;
 
-use app::MainApp;
 use config::TomlConfigStore;
-use eframe::egui;
+use environment::Environment;
 use timetable::BlockingTimetableGetter;
 
 // TODO: show errors when loading config
@@ -19,7 +20,7 @@ use timetable::BlockingTimetableGetter;
 // TODO: use "confy" for config loading?
 // TODO: Setup pipeline
 
-fn main() -> Result<(), ureq::Error> {
+fn main() {
     let config_store = TomlConfigStore::default();
     // let config_store = MemoryConfigStore::new(Config {
     //     vidko: None//Some("E1810".into())
@@ -41,29 +42,9 @@ fn main() -> Result<(), ureq::Error> {
     //     ]
     // });
 
-    let mut native_options = eframe::NativeOptions::default();
-    native_options.decorated = true;
-    native_options.resizable = true;
-    native_options.min_window_size = Some(egui::vec2(480.0, 320.0));
-    native_options.initial_window_size = Some(egui::vec2(500.0, 320.0));
-    native_options.icon_data = Some(eframe::IconData {
-        rgba: image::load_from_memory(include_bytes!("../assets/icon.png"))
-            .expect("Failed to load icon")
-            .into_rgb8()
-            .into_raw(),
-        width: 32,
-        height: 32,
-    });
-    let mut app = MainApp::new(Box::new(config_store),  Box::new(timetable_getter));
-
-    eframe::run_native(
-        "KTU timetable",
-        native_options,
-        Box::new(move |cc| {
-            app.init(cc);
-            Box::new(app)
-        })
-    );
-
-    Ok(())
+    platforms::run_windows_app(Environment {
+        timetable_getter: Box::new(timetable_getter),
+        config_store: Box::new(config_store)
+    })
 }
+
